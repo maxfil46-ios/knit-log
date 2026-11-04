@@ -81,6 +81,13 @@
             <p class="panel-hint" id="storage-message">Данные сохраняются на этом устройстве.</p>
             <div class="storage-row"><span>Локальная база</span><b id="db-status">Активна</b></div>
             <button class="text-button" id="export-btn">↧ Экспортировать резервную копию</button>
+            <label class="import-mode-label" for="import-mode">Режим импорта
+              <select id="import-mode">
+                <option value="merge">Обычное объединение</option>
+                <option value="restore">Восстановить, включая удалённые записи</option>
+              </select>
+            </label>
+            <p class="field-hint import-warning" id="import-restore-warning" hidden>Удалённые записи, присутствующие в резервной копии, будут восстановлены</p>
             <label class="text-button import-label">↥ Восстановить из копии<input type="file" id="import-file" accept="application/json"></label>
           </section>
         </aside>

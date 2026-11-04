@@ -214,6 +214,9 @@ document.getElementById("empty-add").onclick = () => { setProductForm(); openDia
 document.getElementById("add-person-open").onclick = () => { editingPersonId = null; document.getElementById("person-form").reset(); document.getElementById("person-dialog-title").textContent = "Добавить человека"; document.getElementById("person-save-label").textContent = "Сохранить профиль"; openDialog("person-dialog"); };
 document.getElementById("add-person-link").onclick = () => document.getElementById("add-person-open").click();
 document.getElementById("settings-btn").onclick = () => openDialog("settings-dialog");
+document.getElementById("import-mode").addEventListener("change", event => {
+  document.getElementById("import-restore-warning").hidden = event.target.value !== "restore";
+});
 document.getElementById("nav-people").onclick = () => document.getElementById("add-person-open").scrollIntoView({ behavior: "smooth", block: "center" });
 document.getElementById("nav-notes").onclick = () => openDialog("notes-dialog");
 document.querySelectorAll("[data-close]").forEach(b => b.addEventListener("click", () => closeDialog(b.dataset.close)));
@@ -537,7 +540,7 @@ function validTombstone(entry) {
     typeof entry.deletedAt === "number" && Number.isFinite(entry.deletedAt);
 }
 
-async function importBackup(data) {
+async function importBackup(data, { forceRestore = false } = {}) {
   const [localProducts, localPeople, localNotes, localDeletions] = await Promise.all([
     all("products"), all("people"), all("notes"), all("deletions")
   ]);
@@ -555,6 +558,23 @@ async function importBackup(data) {
     if (!previous || normalized.deletedAt > previous.deletedAt) {
       tombstones.set(normalized.id, normalized);
       deletionsToWrite.add(normalized.id);
+    }
+  }
+  const tombstonesToRemove = new Set();
+  if (forceRestore) {
+    const backupIds = {
+      products: new Set(data.products.map(record => record.id)),
+      people: new Set(data.people.map(record => record.id)),
+      notes: new Set(data.notes.map(record => record.id))
+    };
+    for (const [type, ids] of Object.entries(backupIds)) {
+      for (const recordId of ids) {
+        const tombstoneId = `${type}:${recordId}`;
+        if (tombstones.delete(tombstoneId)) {
+          tombstonesToRemove.add(tombstoneId);
+          deletionsToWrite.delete(tombstoneId);
+        }
+      }
     }
   }
   const deleted = new Set([...tombstones.values()].map(t => `${t.type}:${t.recordId}`));
@@ -624,6 +644,7 @@ async function importBackup(data) {
       if (deletionsToWrite.has(tombstone.id)) tx.objectStore("deletions").put(tombstone);
       stores[tombstone.type].delete(tombstone.recordId);
     }
+    for (const tombstoneId of tombstonesToRemove) tx.objectStore("deletions").delete(tombstoneId);
     for (const noteId of notesToDelete) stores.notes.delete(noteId);
     for (const [type, records] of Object.entries({ products, people, notes })) {
       for (const id of changed[type]) records.has(id) && stores[type].put(records.get(id));
@@ -657,8 +678,12 @@ document.getElementById("import-file").onchange = async event => {
     if (data.version !== 4) data.deletions = [];
     if (data.deletions.some(entry => !validTombstone(entry))) throw new Error("Некорректный журнал удалений в резервной копии");
 
+    const forceRestore = document.getElementById("import-mode").value === "restore";
+
     const confirmed = confirm(
-      "Будет выполнено объединение резервной копии с текущими данными.\n\n" +
+      (forceRestore
+        ? "Будет выполнено восстановление данных из резервной копии, включая записи с tombstone.\n\n"
+        : "Будет выполнено объединение резервной копии с текущими данными.\n\n") +
       "Существующие записи не будут автоматически удалены.\n" +
       "При обнаружении конфликтов приложение спросит, какие данные оставить.\n\n" +
       "Перед импортом будет скачана страховочная копия.\n\n" +
@@ -672,7 +697,7 @@ document.getElementById("import-file").onchange = async event => {
       `knit-log-before-import-${Date.now()}.json`
     );
 
-    const result = await importBackup(data);
+    const result = await importBackup(data, { forceRestore });
 
     await render();
 

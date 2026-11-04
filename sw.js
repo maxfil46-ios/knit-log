@@ -1,4 +1,4 @@
-const CACHE_NAME = "knit-log-v7";
+const CACHE_NAME = "knit-log-v8";
 
 const ASSETS = [
   "./",
