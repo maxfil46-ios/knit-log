@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#202b36">
+  <meta name="description" content="Персональная мастерская вязания">
+  <title>KNIT.LOG — Моя мастерская</title>
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" href="./icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="#" aria-label="KNIT.LOG — главная">
+        <span class="brand-mark">K<span>_</span></span>
+        <span><b>KNIT.LOG</b><small>MY LITTLE WORKSHOP</small></span>
+      </a>
+      <div class="top-actions">
+        <span id="connection-pill" class="connection-pill"><i></i><span>Локальный режим</span></span>
+        <button class="icon-button" id="settings-btn" title="Настройки" aria-label="Настройки">⚙</button>
+      </div>
+    </header>
+
+    <main>
+      <section class="welcome">
+        <div>
+          <p class="eyebrow">ТВОЁ ТВОРЧЕСКОЕ ПРОСТРАНСТВО</p>
+          <h1>Моя мастерская</h1>
+          <p class="muted">Все идеи, изделия и заметки — в одном месте.</p>
+        </div>
+        <button class="primary-button" id="add-product-open">＋ Добавить изделие</button>
+      </section>
+
+      <section class="stats" aria-label="Статистика изделий">
+        <article class="stat-card"><span class="stat-number" id="stat-all">0</span><span class="stat-label">Изделий</span></article>
+        <article class="stat-card"><span class="stat-number green" id="stat-done">0</span><span class="stat-label">Готово</span></article>
+        <article class="stat-card"><span class="stat-number amber" id="stat-progress">0</span><span class="stat-label">В процессе</span></article>
+      </section>
+
+      <nav class="tabs" aria-label="Разделы каталога">
+        <button class="tab active" data-filter="all">Все изделия</button>
+        <button class="tab" data-filter="progress">В процессе</button>
+        <button class="tab" data-filter="done">Готовые</button>
+      </nav>
+
+      <section class="content-grid">
+        <div class="catalog-area">
+          <div class="section-heading collection-heading">
+            <div><p class="eyebrow">КОЛЛЕКЦИЯ</p><h2>Изделия</h2></div>
+            <div class="collection-controls">
+              <span id="product-count" class="count-label">0 записей</span>
+              <label class="sort-control" for="product-sort">Сортировка
+                <select id="product-sort" aria-label="Сортировка изделий">
+                  <option value="date-desc">Сначала новые</option>
+                  <option value="date-asc">Сначала старые</option>
+                  <option value="person">По людям</option>
+                </select>
+              </label>
+            </div>
+          </div>
+          <div id="product-grid" class="product-grid"></div>
+          <div id="empty-state" class="empty-state">
+            <div class="empty-icon">✳</div>
+            <h3>Здесь начнётся история</h3>
+            <p>Добавь первое изделие — и постепенно здесь соберётся вся коллекция.</p>
+            <button class="secondary-button" id="empty-add">＋ Добавить первое изделие</button>
+          </div>
+        </div>
+
+        <aside class="side-column">
+          <section class="panel">
+            <div class="section-heading compact"><div><p class="eyebrow">ПЕРСОНАЛЬНЫЕ ДАННЫЕ</p><h2>Люди</h2></div><button class="small-plus" id="add-person-open" aria-label="Добавить человека">＋</button></div>
+            <p class="panel-hint">Профили и индивидуальные мерки для будущих изделий.</p>
+            <div id="people-list" class="people-list"></div>
+            <button class="text-button" id="add-person-link">＋ Добавить человека</button>
+          </section>
+          <section class="panel sync-panel">
+            <div class="section-heading compact"><div><p class="eyebrow">ХРАНЕНИЕ</p><h2>Мои данные</h2></div><span class="local-tag">LOCAL</span></div>
+            <p class="panel-hint" id="storage-message">Данные сохраняются на этом устройстве.</p>
+            <div class="storage-row"><span>Локальная база</span><b id="db-status">Активна</b></div>
+            <button class="text-button" id="export-btn">↧ Экспортировать резервную копию</button>
+            <label class="text-button import-label">↥ Восстановить из копии<input type="file" id="import-file" accept="application/json"></label>
+          </section>
+        </aside>
+      </section>
+    </main>
+
+    <footer class="bottom-nav">
+      <button class="bottom-item active" data-filter="all"><span>▦</span>Мастерская</button>
+      <button class="bottom-item" data-filter="progress"><span>◷</span>В работе</button>
+      <button class="bottom-item" id="nav-people"><span>♙</span>Люди</button>
+      <button class="bottom-item" id="nav-notes"><span>▤</span>Заметки</button>
+    </footer>
+  </div>
+
+  <dialog id="product-dialog" class="dialog">
+    <form id="product-form" method="dialog">
+      <div class="dialog-head"><div><p class="eyebrow" id="product-dialog-eyebrow">НОВАЯ ЗАПИСЬ</p><h2 id="product-dialog-title">Добавить изделие</h2></div><button type="button" class="close-btn" data-close="product-dialog">×</button></div>
+      <label>Название изделия<input name="name" required maxlength="100" placeholder="Например, свитер с косами"></label>
+      <div class="form-two">
+        <label>Статус<select name="status"><option value="progress">В процессе</option><option value="done">Готово</option></select></label>
+        <label>Для кого<select name="personId" id="product-person"><option value="">Не указано</option></select></label>
+      </div>
+      <label>Описание<textarea name="description" rows="3" placeholder="Идея, особенности, пожелания..."></textarea></label>
+      <label>Параметры вязания<textarea name="knitting" rows="3" placeholder="Пряжа, спицы, плотность, петли и ряды..."></textarea></label>
+      <label>Фотографии<input name="photos" id="product-photos" type="file" accept="image/*" multiple></label>
+      <p class="field-hint" id="existing-photo-hint"></p><p class="field-hint">Оригиналы и уменьшенные копии будут сохранены локально. Облачная синхронизация подключается отдельно.</p>
+      <div class="dialog-actions"><button type="button" class="secondary-button" data-close="product-dialog">Отмена</button><button class="primary-button" id="product-save-label" type="submit">Сохранить изделие</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="person-dialog" class="dialog">
+    <form id="person-form" method="dialog">
+      <div class="dialog-head"><div><p class="eyebrow">ПРОФИЛЬ</p><h2 id="person-dialog-title">Добавить человека</h2></div><button type="button" class="close-btn" data-close="person-dialog">×</button></div>
+      <label>Имя<input name="name" required maxlength="80" placeholder="Имя человека"></label>
+      <div class="form-two">
+        <label>Рост, см<input name="height" type="number" min="1" max="260" placeholder="Рост"></label>
+        <label>Обхват груди, см<input name="chest" type="number" min="1" max="250" step="0.1" placeholder="Обхват"></label>
+        <label>Обхват талии, см<input name="waist" type="number" min="1" max="250" step="0.1" placeholder="Обхват"></label>
+        <label>Обхват бёдер, см<input name="hips" type="number" min="1" max="250" step="0.1" placeholder="Обхват"></label>
+      </div>
+      <label>Дополнительные мерки<textarea name="extra" rows="3" placeholder="Название мерки и значение, например: длина рукава — 58 см"></textarea></label>
+      <div class="dialog-actions"><button type="button" class="secondary-button" data-close="person-dialog">Отмена</button><button class="primary-button" id="person-save-label" type="submit">Сохранить профиль</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="detail-dialog" class="dialog detail-dialog">
+    <div id="detail-content"></div>
+  </dialog>
+
+  <dialog id="notes-dialog" class="dialog">
+    <form id="note-form" method="dialog">
+      <div class="dialog-head"><div><p class="eyebrow">ЗАМЕТКА</p><h2>Добавить заметку</h2></div><button type="button" class="close-btn" data-close="notes-dialog">×</button></div>
+      <label>К какому изделию?<select name="productId" id="note-product"></select></label>
+      <label>Текст заметки<textarea name="text" rows="5" required placeholder="Запиши идею, расчёт или важный момент..."></textarea></label>
+      <div class="dialog-actions"><button type="button" class="secondary-button" data-close="notes-dialog">Отмена</button><button class="primary-button" type="submit">Сохранить заметку</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="settings-dialog" class="dialog">
+    <div class="dialog-head"><div><p class="eyebrow">KNIT.LOG</p><h2>О приложении</h2></div><button type="button" class="close-btn" data-close="settings-dialog">×</button></div>
+    <p>Это первая локальная версия мастерской. Данные хранятся в браузере на текущем устройстве.</p>
+    <p class="field-hint">Для синхронизации между телефоном и компьютером потребуется отдельно подключить облачную базу и авторизацию. Пока облако не подключено.</p>
+    <div class="dialog-actions"><button class="primary-button" data-close="settings-dialog">Понятно</button></div>
+  </dialog>
+
+  <div id="toast" class="toast" role="status"></div>
+  <script src="./app.js"></script>
+</body>
+</html>

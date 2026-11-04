@@ -1,0 +1,19 @@
+{
+  "name": "KNIT.LOG — Моя мастерская",
+  "short_name": "KNIT.LOG",
+  "description": "Персональная мастерская вязания",
+  "lang": "ru",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#faf7ef",
+  "theme_color": "#202b36",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
